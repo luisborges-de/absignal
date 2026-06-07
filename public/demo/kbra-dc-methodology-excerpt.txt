@@ -1,0 +1,34 @@
+DATA CENTER ASSET-BACKED SECURITIES - SURVEILLANCE TRIGGER FRAMEWORK
+Adapted from KBRA Rating Methodology - January 2026
+
+3.14(b) Cash Trap Test. If the three-month rolling average DSCR falls below 1.35x (the
+"Cash Trap Threshold"), a Cash Trap Event shall be deemed to have occurred. All Available
+Funds distributable to the Class B Notes and Residual Interest shall be redirected to fund
+the Senior Principal Reserve Account until the threshold is no longer breached for three
+consecutive Determination Dates. Section reference: Section 3.14(b)(ii).
+
+3.14(c) Early Amortisation Test. If the three-month rolling average DSCR falls below 1.10x
+(the "Early Amortisation Threshold"), an Early Amortisation Event shall occur and the
+transaction shall enter accelerated repayment of all Note classes in priority order.
+Section reference: Section 3.14(c)(i).
+
+3.15 Loan-to-Value Sweep Test. If the LTV Ratio exceeds 65.0%, the issuer shall apply all
+Available Funds in excess of scheduled interest to mandatory deleveraging of Class A Senior
+Notes until the LTV Ratio returns below 65.0%. Section reference: Section 3.15(a).
+
+3.16 Occupancy Reserve Trigger. If weighted average occupancy falls below 75.0%, the
+issuer shall maintain an Enhanced Liquidity Reserve equal to six months of projected
+Class A interest payments. Section reference: Section 3.16(b).
+
+3.17 Tenant Concentration Covenant. Contracted revenue from any single tenant shall not
+exceed 40.0% of total portfolio revenue. A breach requires an enhanced 12-month senior
+interest reserve. Section reference: Section 3.17(a).
+
+3.18 WART Covenant. Portfolio weighted average remaining lease term shall be maintained
+above 2.5 years. Breach triggers an Enhanced Reserve. Section reference: Section 3.18.
+
+3.19 Expense Reserve Trigger. The issuer shall maintain an Operating Expense Reserve of
+at least $6,000,000 at all times. Section reference: Section 3.19.
+
+3.20 Additional Issuance Tests. Additional Notes may only be issued if DSCR (pro forma)
+>= 1.35x, LTV (pro forma) <= 65.0%, and occupancy >= 75.0%. Section reference: Section 3.20.
