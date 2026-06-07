@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# System files
+.DS_Store
+
 # Next.js
 .next/
 out/
@@ -25,3 +28,6 @@ test-results/
 # Local screenshots
 datacenteriq-*.png
 absignal-*.png
+
+# Generated one-off conversion artifacts
+assets/*.svg.png

@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="760" viewBox="0 0 1440 760" role="img" aria-labelledby="title desc">
+  <title id="title">ABSignal architecture</title>
+  <desc id="desc">ABSignal connects deal documents and operational performance data to deal intelligence, surveillance, credit metrics and ABS consequences.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#050505"/>
+      <stop offset="100%" stop-color="#151a12"/>
+    </linearGradient>
+    <filter id="shadow" x="-12%" y="-18%" width="124%" height="136%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#000000" flood-opacity="0.26"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto">
+      <path d="M 0 0 L 12 6 L 0 12 z" fill="#76b900"/>
+    </marker>
+  </defs>
+
+  <rect width="1440" height="760" fill="url(#bg)"/>
+  <g opacity="0.08" stroke="#ffffff" stroke-width="1">
+    <path d="M 160 0 V 760"/>
+    <path d="M 320 0 V 760"/>
+    <path d="M 480 0 V 760"/>
+    <path d="M 640 0 V 760"/>
+    <path d="M 800 0 V 760"/>
+    <path d="M 960 0 V 760"/>
+    <path d="M 1120 0 V 760"/>
+    <path d="M 1280 0 V 760"/>
+    <path d="M 0 152 H 1440"/>
+    <path d="M 0 304 H 1440"/>
+    <path d="M 0 456 H 1440"/>
+    <path d="M 0 608 H 1440"/>
+  </g>
+
+  <text x="84" y="76" fill="#76b900" font-family="Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="0">ABSIGNAL</text>
+  <text x="84" y="122" fill="#ffffff" font-family="Arial, sans-serif" font-size="44" font-weight="700" letter-spacing="0">Deal-Aware Credit Surveillance</text>
+  <text x="84" y="158" fill="#b8b8b8" font-family="Arial, sans-serif" font-size="21" letter-spacing="0">Data center ABS documents and performance data converted into monitored credit consequences.</text>
+
+  <g filter="url(#shadow)" font-family="Arial, sans-serif">
+    <rect x="84" y="222" width="324" height="96" rx="10" fill="#ffffff"/>
+    <text x="112" y="264" fill="#000000" font-size="23" font-weight="700">Deal Documents</text>
+    <text x="112" y="294" fill="#5f5f5f" font-size="16">Indentures, KBRA excerpts,</text>
+    <text x="112" y="316" fill="#5f5f5f" font-size="16">trigger language and rules</text>
+
+    <rect x="558" y="222" width="324" height="96" rx="10" fill="#ffffff"/>
+    <text x="586" y="264" fill="#000000" font-size="23" font-weight="700">Deal Intelligence Layer</text>
+    <text x="586" y="294" fill="#5f5f5f" font-size="16">Extract, normalize and review</text>
+    <text x="586" y="316" fill="#5f5f5f" font-size="16">structured trigger definitions</text>
+
+    <rect x="1032" y="222" width="324" height="96" rx="10" fill="#ffffff"/>
+    <text x="1060" y="264" fill="#000000" font-size="23" font-weight="700">Structured Deal Model</text>
+    <text x="1060" y="294" fill="#5f5f5f" font-size="16">Rules, thresholds, lookbacks,</text>
+    <text x="1060" y="316" fill="#5f5f5f" font-size="16">consequences and citations</text>
+
+    <rect x="84" y="390" width="324" height="96" rx="10" fill="#ffffff"/>
+    <text x="112" y="432" fill="#000000" font-size="23" font-weight="700">Operational Data</text>
+    <text x="112" y="462" fill="#5f5f5f" font-size="16">DSCR, occupancy, LTV, tenant</text>
+    <text x="112" y="484" fill="#5f5f5f" font-size="16">concentration and reserves</text>
+
+    <rect x="558" y="390" width="324" height="96" rx="10" fill="#ffffff"/>
+    <text x="586" y="432" fill="#000000" font-size="23" font-weight="700">Surveillance Layer</text>
+    <text x="586" y="462" fill="#5f5f5f" font-size="16">Evaluate trends, buffers and</text>
+    <text x="586" y="484" fill="#5f5f5f" font-size="16">breach distance by period</text>
+
+    <rect x="1032" y="390" width="324" height="96" rx="10" fill="#ffffff"/>
+    <text x="1060" y="432" fill="#000000" font-size="23" font-weight="700">Credit Metrics</text>
+    <text x="1060" y="462" fill="#5f5f5f" font-size="16">Trigger status, DSCR bands,</text>
+    <text x="1060" y="484" fill="#5f5f5f" font-size="16">watch states and history</text>
+
+    <rect x="344" y="592" width="342" height="96" rx="10" fill="#ffffff"/>
+    <text x="372" y="634" fill="#000000" font-size="23" font-weight="700">Credit Intelligence Layer</text>
+    <text x="372" y="664" fill="#5f5f5f" font-size="16">Combine deal model and live</text>
+    <text x="372" y="686" fill="#5f5f5f" font-size="16">performance surveillance</text>
+
+    <rect x="804" y="592" width="342" height="96" rx="10" fill="#ffffff"/>
+    <text x="832" y="634" fill="#000000" font-size="23" font-weight="700">ABS Consequences</text>
+    <text x="832" y="664" fill="#5f5f5f" font-size="16">Cash trap, amortisation,</text>
+    <text x="832" y="686" fill="#5f5f5f" font-size="16">reserves and investor output</text>
+  </g>
+
+  <g stroke="#76b900" stroke-width="4" fill="none" marker-end="url(#arrow)">
+    <path d="M 408 270 H 542"/>
+    <path d="M 882 270 H 1016"/>
+    <path d="M 408 438 H 542"/>
+    <path d="M 882 438 H 1016"/>
+    <path d="M 1194 318 C 1194 544 690 550 604 592"/>
+    <path d="M 1194 486 C 1194 548 736 554 620 592"/>
+    <path d="M 686 640 H 788"/>
+  </g>
+</svg>
