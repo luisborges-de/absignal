@@ -13,6 +13,21 @@ interface RuleCardEditorProps {
   onReject: (ruleId: string) => void
 }
 
+function compactNumber(value: number) {
+  return new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: 4,
+  }).format(value)
+}
+
+function formatThreshold(value: number | null, unit: string) {
+  if (value === null) return 'N/A'
+  if (unit === '%') return `${compactNumber(Math.abs(value) <= 1 ? value * 100 : value)}%`
+  if (unit === 'x') return `${compactNumber(value)}x`
+  if (unit === 'USD') return `$${compactNumber(value)}`
+  if (unit === '$/kWh') return `$${compactNumber(value)}/kWh`
+  return `${compactNumber(value)} ${unit}`.trim()
+}
+
 export function RuleCardEditor({ rule, onApprove, onReject }: RuleCardEditorProps) {
   const lowConfidence = rule.extractionConfidence < 0.5
   const rejected = rule.extractionStatus === 'REJECTED'
@@ -40,7 +55,7 @@ export function RuleCardEditor({ rule, onApprove, onReject }: RuleCardEditorProp
         <div className="mt-5 grid grid-cols-2 gap-3 text-caption-sm text-nv-body">
           <span>Metric: {rule.metricKey}</span>
           <span>Operator: {rule.operator}</span>
-          <span>Threshold: {rule.threshold ?? 'N/A'} {rule.thresholdUnit}</span>
+          <span>Threshold: {formatThreshold(rule.threshold, rule.thresholdUnit)}</span>
           <span>Lookback: {rule.lookbackPeriods}</span>
         </div>
         <p className="mt-4 border-l-2 border-nv-green pl-3 text-caption-sm text-nv-mute">{rule.sourceText}</p>

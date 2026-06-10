@@ -149,9 +149,20 @@ export function resolveWaterfallState(
     return 'EARLY_AMORTISATION'
   }
 
-  if (
-    breached.some((evaluation) => ['DSCR_CASH_TRAP', 'LTV_SWEEP'].includes(evaluation.family))
-  ) {
+  const cashTrapFamilies = [
+    'DSCR_CASH_TRAP',
+    'DSCR_SENIOR_CASH_TRAP',
+    'LTV_SWEEP',
+    'OCCUPANCY_RESERVE',
+    'WALT_CASH_TRAP',
+    'TENANT_CONCENTRATION',
+    'EXPENSE_RESERVE',
+    'INTEREST_RESERVE',
+  ]
+
+  // PUE_EFFICIENCY and POWER_COST are surveillance-only families: they can
+  // reach WATCH/BREACH status but never divert the waterfall.
+  if (breached.some((evaluation) => cashTrapFamilies.includes(evaluation.family))) {
     return 'CASH_TRAP'
   }
 

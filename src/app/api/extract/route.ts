@@ -1,5 +1,12 @@
 import { NextResponse } from 'next/server'
-import { extractRulesWithAnthropic } from '@/lib/extraction/ruleExtractor'
+import {
+  assertPdfFileWithinOpenAILimit,
+  extractDocumentWithOpenAI,
+  extractPdfFileWithOpenAI,
+  isFallbackEligiblePdfError,
+  isOpenAIConfigured,
+  type ExtractionResult,
+} from '@/lib/extraction/ruleExtractor'
 import { isSupabaseConfigured } from '@/lib/supabase/env'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { upsertExtractedRules } from '@/lib/supabase/queries/triggers'
@@ -10,6 +17,13 @@ export const runtime = 'nodejs'
 interface ExtractRequest {
   documentText: string
   dealId: string
+  extractDealMetadata?: boolean
+  pdfFallback?: {
+    bytes: Uint8Array
+    filename: string
+    mimeType: string
+    localParserError: string
+  }
 }
 
 function isExtractRequest(value: unknown): value is ExtractRequest {
@@ -18,11 +32,25 @@ function isExtractRequest(value: unknown): value is ExtractRequest {
   return typeof candidate.documentText === 'string' && typeof candidate.dealId === 'string'
 }
 
-async function parsePdf(file: File) {
-  const pdfParse = (await import('pdf-parse')).default
-  const bytes = Buffer.from(await file.arrayBuffer())
-  const parsed = await pdfParse(bytes)
-  return parsed.text
+function errorMessage(cause: unknown) {
+  return cause instanceof Error ? `${cause.name}: ${cause.message}` : String(cause)
+}
+
+function pdfFallbackRequest(file: File, bytes: Uint8Array, cause: unknown): ExtractRequest['pdfFallback'] {
+  return {
+    bytes,
+    filename: file.name || 'document.pdf',
+    mimeType: file.type || 'application/pdf',
+    localParserError: errorMessage(cause),
+  }
+}
+
+async function parsePdf(bytes: Uint8Array) {
+  const { extractText } = await import('unpdf')
+  const { text } = await extractText(bytes, {
+    mergePages: true,
+  })
+  return text
 }
 
 async function readExtractRequest(request: Request): Promise<ExtractRequest | NextResponse> {
@@ -33,21 +61,52 @@ async function readExtractRequest(request: Request): Promise<ExtractRequest | Ne
     const dealId = form.get('dealId')
     const documentText = form.get('documentText')
     const file = form.get('file')
+    const extractDealMetadata = form.get('extractDealMetadata') === 'true'
 
     if (typeof dealId !== 'string') {
       return NextResponse.json({ error: 'dealId is required.' }, { status: 400 })
     }
 
     if (file instanceof File && file.size > 0) {
-      const text =
-        file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
-          ? await parsePdf(file)
-          : await file.text()
-      return { dealId, documentText: text }
+      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+
+      if (isPdf) {
+        const bytes = new Uint8Array(await file.arrayBuffer())
+        try {
+          const text = await parsePdf(bytes)
+          if (text.trim()) return { dealId, documentText: text, extractDealMetadata }
+
+          return {
+            dealId,
+            documentText: '',
+            extractDealMetadata,
+            pdfFallback: pdfFallbackRequest(
+              file,
+              bytes,
+              new Error('No readable text was found in the uploaded PDF.'),
+            ),
+          }
+        } catch (cause) {
+          if (isFallbackEligiblePdfError(cause)) {
+            return {
+              dealId,
+              documentText: '',
+              extractDealMetadata,
+              pdfFallback: pdfFallbackRequest(file, bytes, cause),
+            }
+          }
+          throw new Error(
+            'Could not read this PDF — it may be scanned images or corrupt. Paste the document text instead.',
+          )
+        }
+      }
+
+      const text = await file.text()
+      return { dealId, documentText: text, extractDealMetadata }
     }
 
     if (typeof documentText === 'string' && documentText.trim()) {
-      return { dealId, documentText }
+      return { dealId, documentText, extractDealMetadata }
     }
 
     return NextResponse.json({ error: 'A text document or file is required.' }, { status: 400 })
@@ -62,10 +121,90 @@ async function readExtractRequest(request: Request): Promise<ExtractRequest | Ne
 }
 
 export async function POST(request: Request) {
-  const body = await readExtractRequest(request)
+  let body: ExtractRequest | NextResponse
+  try {
+    body = await readExtractRequest(request)
+  } catch (cause) {
+    // PDF parsing (password-protected / corrupt) and request parsing failures.
+    return NextResponse.json(
+      { error: cause instanceof Error ? cause.message : 'Could not read the uploaded document.' },
+      { status: 422 },
+    )
+  }
   if (body instanceof NextResponse) return body
 
-  const candidates = await extractRulesWithAnthropic(body.documentText)
+  if (!body.documentText.trim() && !body.pdfFallback) {
+    return NextResponse.json(
+      {
+        error:
+          'No readable text was found in the document. A scanned or image-only PDF cannot be parsed — paste the text instead.',
+      },
+      { status: 422 },
+    )
+  }
+
+  let result: ExtractionResult
+  try {
+    if (body.pdfFallback && !body.documentText.trim()) {
+      if (!isOpenAIConfigured()) {
+        return NextResponse.json(
+          {
+            error:
+              `Local PDF text parsing failed: ${body.pdfFallback.localParserError}. ` +
+              'AI PDF fallback is unavailable because OPENAI_API_KEY is not configured. ' +
+              'Add OPENAI_API_KEY to .env.local, upload an unlocked PDF, or paste the document text.',
+          },
+          { status: 422 },
+        )
+      }
+
+      try {
+        assertPdfFileWithinOpenAILimit(body.pdfFallback.bytes.byteLength)
+      } catch (cause) {
+        return NextResponse.json(
+          { error: cause instanceof Error ? cause.message : 'PDF is too large for AI PDF fallback.' },
+          { status: 413 },
+        )
+      }
+
+      try {
+        result = await extractPdfFileWithOpenAI(body.pdfFallback.bytes, {
+          extractDealMetadata: body.extractDealMetadata,
+          filename: body.pdfFallback.filename,
+          mimeType: body.pdfFallback.mimeType,
+        })
+      } catch (cause) {
+        return NextResponse.json(
+          {
+            error:
+              `Local PDF text parsing failed: ${body.pdfFallback.localParserError}. ` +
+              `AI PDF fallback failed: ${cause instanceof Error ? cause.message : String(cause)}`,
+          },
+          { status: 502 },
+        )
+      }
+    } else {
+      result = await extractDocumentWithOpenAI(body.documentText, {
+        extractDealMetadata: body.extractDealMetadata,
+      })
+    }
+  } catch (cause) {
+    return NextResponse.json(
+      {
+        error:
+          cause instanceof Error ? `AI extraction failed: ${cause.message}` : 'AI extraction failed.',
+      },
+      { status: 502 },
+    )
+  }
+  const { dealMetadata, closingSnapshot, rules: candidates } = result
+
+  // Deal-intake extraction: the deal does not exist yet, so return drafts
+  // without persisting. The client creates the deal, then bulk-upserts rules
+  // and the closing snapshot.
+  if (body.extractDealMetadata) {
+    return NextResponse.json({ dealMetadata, closingSnapshot, candidates, count: candidates.length })
+  }
 
   if (!isSupabaseConfigured()) {
     const rules = await upsertExtractedRules({ dealId: body.dealId, candidates })

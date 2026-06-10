@@ -10,6 +10,13 @@ export const evaluationKeys = {
   all: (dealId: string) => ['evaluations', dealId] as const,
 }
 
+let evaluationChannelCounter = 0
+
+export function createEvaluationChannelTopic(dealId: string) {
+  evaluationChannelCounter += 1
+  return `evaluations:${dealId}:${evaluationChannelCounter}`
+}
+
 export function useEvaluations(dealId: string, ruleIds: string[] = []) {
   const queryClient = useQueryClient()
   const ruleIdKey = [...ruleIds].sort().join(',')
@@ -19,7 +26,7 @@ export function useEvaluations(dealId: string, ruleIds: string[] = []) {
 
     const supabase = createClient()
     const channel = supabase
-      .channel(`evaluations:${dealId}`)
+      .channel(createEvaluationChannelTopic(dealId))
       .on(
         'postgres_changes',
         {

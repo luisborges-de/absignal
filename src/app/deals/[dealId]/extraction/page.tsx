@@ -1,9 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { PageShell } from '@/components/layout/PageShell'
-import { DealHeader } from '@/components/deals/DealHeader'
-import { DealSubNav } from '@/components/deals/DealSubNav'
+import { DealWorkspaceShell } from '@/components/deals/DealWorkspaceShell'
 import {
   DocumentUploader,
   type ExtractionDocument,
@@ -11,7 +10,6 @@ import {
 import { ExtractionReviewPanel } from '@/components/extraction/ExtractionReviewPanel'
 import { Card } from '@/components/ui/Card'
 import { useDeal } from '@/hooks/useDeals'
-import { useSnapshots } from '@/hooks/useSnapshots'
 import {
   triggerKeys,
   useTriggerRules,
@@ -21,15 +19,16 @@ import { useUIStore } from '@/store/uiStore'
 
 export default function ExtractionPage({ params }: { params: { dealId: string } }) {
   const deal = useDeal(params.dealId)
-  const snapshots = useSnapshots(params.dealId)
   const rules = useTriggerRules(params.dealId)
   const updateStatus = useUpdateTriggerRuleStatus(params.dealId)
   const isExtracting = useUIStore((state) => state.isExtracting)
   const setExtracting = useUIStore((state) => state.setExtracting)
   const queryClient = useQueryClient()
+  const [error, setError] = useState<string | null>(null)
 
   async function extract(document: ExtractionDocument) {
     setExtracting(true)
+    setError(null)
     try {
       const body =
         document.file || document.documentText.startsWith('PDF selected:')
@@ -55,26 +54,22 @@ export default function ExtractionPage({ params }: { params: { dealId: string } 
 
   if (!deal.data) {
     return (
-      <PageShell showDemoBanner>
-        <section className="py-section">
-          <Card className="min-h-[420px] animate-pulse" />
-        </section>
-      </PageShell>
+      <DealWorkspaceShell dealId={params.dealId}>
+        <Card className="min-h-[420px] animate-pulse" />
+      </DealWorkspaceShell>
     )
   }
 
   return (
-    <PageShell constrained={false} showDemoBanner>
-      <DealHeader deal={deal.data} latestSnapshot={snapshots.data?.at(-1)} />
-      <DealSubNav dealId={params.dealId} />
-      <section className="mx-auto grid max-w-content gap-6 px-6 py-section lg:grid-cols-[0.4fr_0.6fr]">
+    <DealWorkspaceShell dealId={params.dealId}>
+      <div className="grid gap-6 lg:grid-cols-[0.4fr_0.6fr]">
         <DocumentUploader onExtract={extract} isExtracting={isExtracting} />
         <ExtractionReviewPanel
           rules={rules.data ?? []}
           onApprove={(ruleId) => updateStatus.mutate({ ruleId, status: 'APPROVED' })}
           onReject={(ruleId) => updateStatus.mutate({ ruleId, status: 'REJECTED' })}
         />
-      </section>
-    </PageShell>
+      </div>
+    </DealWorkspaceShell>
   )
 }

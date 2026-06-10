@@ -1,7 +1,7 @@
 import { evaluateAllTriggers } from '@/lib/engine/triggerEngine'
 import {
   DEMO_DEAL_ID,
-  demoDeal,
+  demoDeals,
   demoEvaluations,
   demoSnapshots,
   demoTriggerRules,
@@ -40,19 +40,26 @@ function write<T>(key: string, value: T) {
 }
 
 export function getLocalDeals(): Deal[] {
-  return read(keys.deals, [demoDeal])
+  return read<Deal[]>(keys.deals, [])
 }
 
 export function getLocalDeal(id: string): Deal | null {
   return getLocalDeals().find((deal) => deal.id === id) ?? null
 }
 
+export function addLocalDeal(deal: Deal) {
+  const existing = getLocalDeals()
+  const next = [deal, ...existing.filter((item) => item.id !== deal.id)]
+  write(keys.deals, next)
+  return deal
+}
+
 export function getLocalTriggerRules(dealId = DEMO_DEAL_ID): TriggerRule[] {
-  return read(keys.rules, demoTriggerRules).filter((rule) => rule.dealId === dealId)
+  return read<TriggerRule[]>(keys.rules, []).filter((rule) => rule.dealId === dealId)
 }
 
 export function addLocalTriggerRules(rules: TriggerRule[]) {
-  const existing = read(keys.rules, demoTriggerRules)
+  const existing = read<TriggerRule[]>(keys.rules, [])
   const next = [
     ...existing.filter((rule) => !rules.some((candidate) => candidate.id === rule.id)),
     ...rules,
@@ -62,7 +69,7 @@ export function addLocalTriggerRules(rules: TriggerRule[]) {
 }
 
 export function updateLocalTriggerStatus(ruleId: string, status: TriggerRule['extractionStatus']) {
-  const next = read(keys.rules, demoTriggerRules).map((rule) =>
+  const next = read<TriggerRule[]>(keys.rules, []).map((rule) =>
     rule.id === ruleId ? { ...rule, extractionStatus: status, updatedAt: new Date().toISOString() } : rule,
   )
   write(keys.rules, next)
@@ -70,11 +77,11 @@ export function updateLocalTriggerStatus(ruleId: string, status: TriggerRule['ex
 }
 
 export function getLocalSnapshots(dealId = DEMO_DEAL_ID): PerformanceSnapshot[] {
-  return read(keys.snapshots, demoSnapshots).filter((snapshot) => snapshot.dealId === dealId)
+  return read<PerformanceSnapshot[]>(keys.snapshots, []).filter((snapshot) => snapshot.dealId === dealId)
 }
 
 export function addLocalSnapshot(snapshot: PerformanceSnapshot) {
-  const existing = read(keys.snapshots, demoSnapshots)
+  const existing = read<PerformanceSnapshot[]>(keys.snapshots, [])
   const next = [
     ...existing.filter(
       (item) => !(item.dealId === snapshot.dealId && item.periodDate === snapshot.periodDate),
@@ -86,13 +93,13 @@ export function addLocalSnapshot(snapshot: PerformanceSnapshot) {
 }
 
 export function getLocalEvaluations(dealId = DEMO_DEAL_ID): TriggerEvaluation[] {
-  return read(keys.evaluations, demoEvaluations).filter((evaluation) =>
+  return read<TriggerEvaluation[]>(keys.evaluations, []).filter((evaluation) =>
     getLocalTriggerRules(dealId).some((rule) => rule.id === evaluation.ruleId),
   )
 }
 
 export function upsertLocalEvaluations(evaluations: TriggerEvaluation[]) {
-  const existing = read(keys.evaluations, demoEvaluations)
+  const existing = read<TriggerEvaluation[]>(keys.evaluations, [])
   const next = [
     ...existing.filter((item) => !evaluations.some((evaluation) => evaluation.id === item.id)),
     ...evaluations,
@@ -108,4 +115,23 @@ export function evaluateLocalSnapshot(dealId: string, snapshot: PerformanceSnaps
   const evaluations = evaluateAllTriggers(rules, snapshots)
   upsertLocalEvaluations(evaluations)
   return evaluations
+}
+
+/** True when the browser has any locally-persisted deals (real uploads or loaded demo). */
+export function hasLocalData() {
+  return getLocalDeals().length > 0
+}
+
+/** One-click fallback for live demos: seed the 5 sample deals into local storage. */
+export function loadDemoData() {
+  write(keys.deals, demoDeals)
+  write(keys.rules, demoTriggerRules)
+  write(keys.snapshots, demoSnapshots)
+  write(keys.evaluations, demoEvaluations)
+}
+
+/** Wipe all locally-persisted deals/rules/snapshots/evaluations. */
+export function clearDemoData() {
+  if (!canUseStorage()) return
+  for (const key of Object.values(keys)) window.localStorage.removeItem(key)
 }

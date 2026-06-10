@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import fs from 'node:fs'
 import {
   demoDeal,
+  demoDeals,
   demoEvaluations,
   demoSnapshots,
   demoTriggerRules,
@@ -80,8 +81,8 @@ async function main() {
   }
 
   await assertNoError(
-    'seed deal',
-    await service.from('deals').upsert(toDealRow(demoDeal), { onConflict: 'id' }),
+    'seed deals',
+    await service.from('deals').upsert(demoDeals.map(toDealRow), { onConflict: 'id' }),
   )
   await assertNoError(
     'seed trigger rules',
@@ -109,13 +110,14 @@ async function main() {
   if (signIn.error) throw new Error(`demo sign in: ${signIn.error.message}`)
 
   const authed = anon
+  const dealIds = demoDeals.map((item) => item.id)
   const [deal, rules, snapshots, evaluations] = await Promise.all([
     authed.from('deals').select('id').eq('id', demoDeal.id).single(),
-    authed.from('trigger_rules').select('id', { count: 'exact', head: true }).eq('deal_id', demoDeal.id),
+    authed.from('trigger_rules').select('id', { count: 'exact', head: true }).in('deal_id', dealIds),
     authed
       .from('performance_snapshots')
       .select('id', { count: 'exact', head: true })
-      .eq('deal_id', demoDeal.id),
+      .in('deal_id', dealIds),
     authed
       .from('trigger_evaluations')
       .select('id', { count: 'exact', head: true })
@@ -141,12 +143,13 @@ async function main() {
     evaluations: evaluations.count ?? 0,
   }
 
-  if (actual.rules !== expected.rules) throw new Error(`expected ${expected.rules} rules, got ${actual.rules}`)
-  if (actual.snapshots !== expected.snapshots) {
-    throw new Error(`expected ${expected.snapshots} snapshots, got ${actual.snapshots}`)
+  // Lower bounds: ingest-presales.ts and analyst activity may add extra rows.
+  if (actual.rules < expected.rules) throw new Error(`expected >=${expected.rules} rules, got ${actual.rules}`)
+  if (actual.snapshots < expected.snapshots) {
+    throw new Error(`expected >=${expected.snapshots} snapshots, got ${actual.snapshots}`)
   }
-  if (actual.evaluations !== expected.evaluations) {
-    throw new Error(`expected ${expected.evaluations} evaluations, got ${actual.evaluations}`)
+  if (actual.evaluations < expected.evaluations) {
+    throw new Error(`expected >=${expected.evaluations} evaluations, got ${actual.evaluations}`)
   }
 
   console.log('Supabase demo backend is seeded and verified.')

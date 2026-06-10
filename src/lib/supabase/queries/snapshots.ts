@@ -1,5 +1,6 @@
 import { addLocalSnapshot, getLocalSnapshots } from '@/lib/demo/localStore'
 import { DEMO_DEAL_ID } from '@/lib/demo/seedDemo'
+import { computeRatios } from '@/lib/engine/ratios'
 import { createClient } from '@/lib/supabase/client'
 import { isSupabaseConfigured } from '@/lib/supabase/env'
 import { mapSnapshot } from './mappers'
@@ -11,17 +12,11 @@ function id() {
 }
 
 function withComputedRatios(dealId: string, input: PerformanceSnapshotInput): PerformanceSnapshot {
-  const dscr = input.scheduledDebtService > 0 ? input.netCashFlow / input.scheduledDebtService : 0
-  const seniorDscr = input.seniorDebtService > 0 ? input.netCashFlow / input.seniorDebtService : 0
-  const ltv = input.appraisedValue > 0 ? input.outstandingBalance / input.appraisedValue : 0
-
   return {
     ...input,
     id: id(),
     dealId,
-    dscr: Math.round(dscr * 10_000) / 10_000,
-    seniorDscr: Math.round(seniorDscr * 10_000) / 10_000,
-    ltv: Math.round(ltv * 10_000) / 10_000,
+    ...computeRatios(input),
     source: input.source ?? 'MANUAL',
     createdAt: new Date().toISOString(),
   }

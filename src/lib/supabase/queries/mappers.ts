@@ -27,6 +27,7 @@ export function mapDeal(row: DealRow): Deal {
     userId: row.user_id,
     name: row.name,
     issuer: row.issuer,
+    market: row.market ?? 'NORTHERN_VIRGINIA',
     closingDate: row.closing_date,
     arDate: row.ar_date,
     totalIssuance: row.total_issuance,

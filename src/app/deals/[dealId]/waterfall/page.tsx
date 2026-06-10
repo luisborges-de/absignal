@@ -1,8 +1,6 @@
 'use client'
 
-import { PageShell } from '@/components/layout/PageShell'
-import { DealHeader } from '@/components/deals/DealHeader'
-import { DealSubNav } from '@/components/deals/DealSubNav'
+import { DealWorkspaceShell } from '@/components/deals/DealWorkspaceShell'
 import { Card } from '@/components/ui/Card'
 import { DSCRGauge } from '@/components/waterfall/DSCRGauge'
 import { TriggerDistanceBar } from '@/components/waterfall/TriggerDistanceBar'
@@ -32,19 +30,15 @@ export default function WaterfallPage({ params }: { params: { dealId: string } }
 
   if (!deal.data) {
     return (
-      <PageShell showDemoBanner>
-        <section className="py-section">
-          <Card className="min-h-[420px] animate-pulse" />
-        </section>
-      </PageShell>
+      <DealWorkspaceShell dealId={params.dealId}>
+        <Card className="min-h-[420px] animate-pulse" />
+      </DealWorkspaceShell>
     )
   }
 
   return (
-    <PageShell constrained={false} showDemoBanner>
-      <DealHeader deal={deal.data} latestSnapshot={latestSnapshot} />
-      <DealSubNav dealId={params.dealId} />
-      <section className="mx-auto space-y-8 px-6 py-section" style={{ maxWidth: 1280 }}>
+    <DealWorkspaceShell dealId={params.dealId}>
+      <div className="space-y-8">
         <div
           className={
             state === 'NORMAL'
@@ -68,7 +62,7 @@ export default function WaterfallPage({ params }: { params: { dealId: string } }
             />
           ))}
         </div>
-      </section>
-    </PageShell>
+      </div>
+    </DealWorkspaceShell>
   )
 }

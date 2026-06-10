@@ -158,12 +158,12 @@ export function PerformanceSnapshotForm({ dealId }: { dealId: string }) {
 
   return (
     <Card>
-      <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-caption-md font-bold uppercase text-nv-mute">Performance Snapshot</p>
           <h2 className="mt-1 text-heading-xl font-bold">Calculate & Evaluate</h2>
         </div>
-        <div className="grid grid-cols-3 gap-3 text-right text-caption-sm">
+        <div className="grid grid-cols-3 gap-3 text-left text-caption-sm sm:text-right">
           <span>DSCR <strong>{computed.dscr.toFixed(2)}x</strong></span>
           <span>Senior <strong>{computed.seniorDscr.toFixed(2)}x</strong></span>
           <span>LTV <strong>{(computed.ltv * 100).toFixed(1)}%</strong></span>

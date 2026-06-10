@@ -14,7 +14,11 @@ function randomId() {
   return `local-${Date.now()}-${Math.random().toString(16).slice(2)}`
 }
 
-function makeRule(dealId: string, candidate: ExtractedRuleCandidate): TriggerRule {
+function makeRule(
+  dealId: string,
+  candidate: ExtractedRuleCandidate,
+  status: TriggerRule['extractionStatus'] = 'EXTRACTED',
+): TriggerRule {
   const timestamp = new Date().toISOString()
 
   return {
@@ -31,7 +35,7 @@ function makeRule(dealId: string, candidate: ExtractedRuleCandidate): TriggerRul
     consequence: candidate.consequence,
     sectionReference: candidate.sectionReference,
     sourceText: candidate.sourceText,
-    extractionStatus: 'EXTRACTED',
+    extractionStatus: status,
     extractionConfidence: candidate.extractionConfidence,
     watchBuffer: candidate.watchBuffer,
     active: true,
@@ -104,11 +108,13 @@ export async function updateTriggerRuleStatus({
 export async function upsertExtractedRules({
   dealId,
   candidates,
+  status = 'EXTRACTED',
 }: {
   dealId: string
   candidates: ExtractedRuleCandidate[]
+  status?: TriggerRule['extractionStatus']
 }) {
-  const rules = candidates.map((candidate) => makeRule(dealId, candidate))
+  const rules = candidates.map((candidate) => makeRule(dealId, candidate, status))
 
   if (!isSupabaseConfigured()) {
     return addLocalTriggerRules(rules)

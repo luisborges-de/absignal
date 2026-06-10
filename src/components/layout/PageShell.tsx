@@ -7,15 +7,21 @@ interface PageShellProps {
   children: ReactNode
   constrained?: boolean
   showDemoBanner?: boolean
+  showFooter?: boolean
 }
 
-export function PageShell({ children, constrained = true, showDemoBanner = false }: PageShellProps) {
+export function PageShell({
+  children,
+  constrained = true,
+  showDemoBanner = false,
+  showFooter = true,
+}: PageShellProps) {
   return (
     <>
       <PrimaryNav />
       {showDemoBanner && <DemoModeBanner />}
       <main className={constrained ? 'mx-auto max-w-content px-6' : undefined}>{children}</main>
-      <Footer />
+      {showFooter && <Footer />}
     </>
   )
 }

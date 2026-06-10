@@ -202,18 +202,23 @@ describe('triggerEngine', () => {
     expect(resolveWaterfallState([evaluation], '2000-01-01')).toBe('POST_ARD')
   })
 
-  it('covers all 10 trigger families across evaluation cases', () => {
+  it('covers all trigger families across evaluation cases', () => {
     const families: TriggerFamily[] = [
       'DSCR_CASH_TRAP',
       'DSCR_EARLY_AMORTISATION',
+      'DSCR_SENIOR_CASH_TRAP',
       'LTV_SWEEP',
       'OCCUPANCY_RESERVE',
       'TENANT_CONCENTRATION',
       'WART_RESERVE',
+      'WALT_CASH_TRAP',
+      'PUE_EFFICIENCY',
+      'POWER_COST',
       'SERVICER_TERMINATION',
       'ADDITIONAL_ISSUANCE',
       'ARD_MATURITY',
       'EXPENSE_RESERVE',
+      'INTEREST_RESERVE',
     ]
 
     const rules = families.map((family, index) =>
@@ -230,5 +235,162 @@ describe('triggerEngine', () => {
     const results = evaluateAllTriggers(rules, [snapshot('2025-10-31', { dscr: 1.5, occupancyRate: 0.8 })])
 
     expect(new Set(results.map((result) => result.family))).toEqual(new Set(families))
+  })
+
+  describe('expanded trigger families', () => {
+    it('fires OCCUPANCY_RESERVE below threshold and resolves CASH_TRAP', () => {
+      const result = evaluateTrigger(
+        baseRule({
+          family: 'OCCUPANCY_RESERVE',
+          metricKey: 'occupancyRate',
+          operator: 'LT',
+          threshold: 0.75,
+          lookbackPeriods: 1,
+        }),
+        [snapshot('2025-10-31', { occupancyRate: 0.7 })],
+      )
+
+      expect(result.status).toBe('BREACH')
+      expect(resolveWaterfallState([result])).toBe('CASH_TRAP')
+    })
+
+    it('fires WALT_CASH_TRAP below threshold and resolves CASH_TRAP', () => {
+      const result = evaluateTrigger(
+        baseRule({
+          family: 'WALT_CASH_TRAP',
+          metricKey: 'weightedAvgRemainingLeaseTerm',
+          operator: 'LT',
+          threshold: 2.5,
+          lookbackPeriods: 1,
+        }),
+        [snapshot('2025-10-31', { weightedAvgRemainingLeaseTerm: 2.1 })],
+      )
+
+      expect(result.status).toBe('BREACH')
+      expect(resolveWaterfallState([result])).toBe('CASH_TRAP')
+    })
+
+    it('fires TENANT_CONCENTRATION above threshold and resolves CASH_TRAP', () => {
+      const result = evaluateTrigger(
+        baseRule({
+          family: 'TENANT_CONCENTRATION',
+          metricKey: 'topTenantRevenuePct',
+          operator: 'GT',
+          threshold: 0.4,
+          lookbackPeriods: 1,
+        }),
+        [snapshot('2025-10-31', { topTenantRevenuePct: 0.45 })],
+      )
+
+      expect(result.status).toBe('BREACH')
+      expect(resolveWaterfallState([result])).toBe('CASH_TRAP')
+    })
+
+    it('fires EXPENSE_RESERVE below threshold and resolves CASH_TRAP', () => {
+      const result = evaluateTrigger(
+        baseRule({
+          family: 'EXPENSE_RESERVE',
+          metricKey: 'expenseReserveBalance',
+          operator: 'LT',
+          threshold: 6_000_000,
+          lookbackPeriods: 1,
+        }),
+        [snapshot('2025-10-31', { expenseReserveBalance: 5_400_000 })],
+      )
+
+      expect(result.status).toBe('BREACH')
+      expect(resolveWaterfallState([result])).toBe('CASH_TRAP')
+    })
+
+    it('fires INTEREST_RESERVE below threshold and resolves CASH_TRAP', () => {
+      const result = evaluateTrigger(
+        baseRule({
+          family: 'INTEREST_RESERVE',
+          metricKey: 'seniorInterestReserveBalance',
+          operator: 'LT',
+          threshold: 18_000_000,
+          lookbackPeriods: 1,
+        }),
+        [snapshot('2025-10-31', { seniorInterestReserveBalance: 15_000_000 })],
+      )
+
+      expect(result.status).toBe('BREACH')
+      expect(resolveWaterfallState([result])).toBe('CASH_TRAP')
+    })
+
+    it('fires DSCR_SENIOR_CASH_TRAP below threshold and resolves CASH_TRAP', () => {
+      const result = evaluateTrigger(
+        baseRule({
+          family: 'DSCR_SENIOR_CASH_TRAP',
+          metricKey: 'seniorDscr',
+          operator: 'LT',
+          threshold: 1.5,
+          lookbackPeriods: 1,
+        }),
+        [snapshot('2025-10-31', { seniorDscr: 1.4 })],
+      )
+
+      expect(result.status).toBe('BREACH')
+      expect(resolveWaterfallState([result])).toBe('CASH_TRAP')
+    })
+
+    it('evaluates PUE_EFFICIENCY into WATCH near the threshold', () => {
+      const result = evaluateTrigger(
+        baseRule({
+          family: 'PUE_EFFICIENCY',
+          metricKey: 'pueRatio',
+          operator: 'GT',
+          threshold: 1.4,
+          lookbackPeriods: 1,
+          watchBuffer: 0.1,
+        }),
+        [snapshot('2025-10-31', { pueRatio: 1.36 })],
+      )
+
+      expect(result.status).toBe('WATCH')
+    })
+
+    it('evaluates POWER_COST into WATCH near the threshold', () => {
+      const result = evaluateTrigger(
+        baseRule({
+          family: 'POWER_COST',
+          metricKey: 'powerCostPerKwh',
+          operator: 'GT',
+          threshold: 0.095,
+          lookbackPeriods: 1,
+          watchBuffer: 0.1,
+        }),
+        [snapshot('2025-10-31', { powerCostPerKwh: 0.092 })],
+      )
+
+      expect(result.status).toBe('WATCH')
+    })
+
+    it('never changes waterfall state for PUE_EFFICIENCY or POWER_COST even on BREACH', () => {
+      const pueBreach = evaluateTrigger(
+        baseRule({
+          family: 'PUE_EFFICIENCY',
+          metricKey: 'pueRatio',
+          operator: 'GT',
+          threshold: 1.4,
+          lookbackPeriods: 1,
+        }),
+        [snapshot('2025-10-31', { pueRatio: 1.55 })],
+      )
+      const powerBreach = evaluateTrigger(
+        baseRule({
+          family: 'POWER_COST',
+          metricKey: 'powerCostPerKwh',
+          operator: 'GT',
+          threshold: 0.095,
+          lookbackPeriods: 1,
+        }),
+        [snapshot('2025-10-31', { powerCostPerKwh: 0.12 })],
+      )
+
+      expect(pueBreach.status).toBe('BREACH')
+      expect(powerBreach.status).toBe('BREACH')
+      expect(resolveWaterfallState([pueBreach, powerBreach])).toBe('NORMAL')
+    })
   })
 })

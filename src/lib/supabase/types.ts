@@ -17,6 +17,7 @@ export interface Database {
         user_id: string | null
         name: string
         issuer: string
+        market: 'NORTHERN_VIRGINIA' | 'SILICON_VALLEY' | 'CHICAGO' | 'DALLAS' | 'PHOENIX' | null
         closing_date: string
         ar_date: string
         total_issuance: number
@@ -36,14 +37,19 @@ export interface Database {
         family:
           | 'DSCR_CASH_TRAP'
           | 'DSCR_EARLY_AMORTISATION'
+          | 'DSCR_SENIOR_CASH_TRAP'
           | 'LTV_SWEEP'
           | 'OCCUPANCY_RESERVE'
           | 'TENANT_CONCENTRATION'
           | 'WART_RESERVE'
+          | 'WALT_CASH_TRAP'
+          | 'PUE_EFFICIENCY'
+          | 'POWER_COST'
           | 'SERVICER_TERMINATION'
           | 'ADDITIONAL_ISSUANCE'
           | 'ARD_MATURITY'
           | 'EXPENSE_RESERVE'
+          | 'INTEREST_RESERVE'
         name: string
         description: string | null
         metric_key: string

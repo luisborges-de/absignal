@@ -1,9 +1,9 @@
 'use client'
 
-import { PageShell } from '@/components/layout/PageShell'
-import { DealHeader } from '@/components/deals/DealHeader'
-import { DealSubNav } from '@/components/deals/DealSubNav'
+import { DealWorkspaceShell } from '@/components/deals/DealWorkspaceShell'
+import { LiveSignalPanel } from '@/components/performance/LiveSignalPanel'
 import { PerformanceSnapshotForm } from '@/components/performance/PerformanceSnapshotForm'
+import { SnapshotCsvImport } from '@/components/performance/SnapshotCsvImport'
 import { MetricTrendChart } from '@/components/performance/MetricTrendChart'
 import { SnapshotHistoryTable } from '@/components/performance/SnapshotHistoryTable'
 import { Card } from '@/components/ui/Card'
@@ -21,19 +21,17 @@ export default function PerformancePage({ params }: { params: { dealId: string }
 
   if (!deal.data) {
     return (
-      <PageShell showDemoBanner>
-        <section className="py-section">
-          <Card className="min-h-[420px] animate-pulse" />
-        </section>
-      </PageShell>
+      <DealWorkspaceShell dealId={params.dealId}>
+        <Card className="min-h-[420px] animate-pulse" />
+      </DealWorkspaceShell>
     )
   }
 
   return (
-    <PageShell constrained={false} showDemoBanner>
-      <DealHeader deal={deal.data} latestSnapshot={data.at(-1)} />
-      <DealSubNav dealId={params.dealId} />
-      <section className="mx-auto space-y-8 px-6 py-section" style={{ maxWidth: 1280 }}>
+    <DealWorkspaceShell dealId={params.dealId}>
+      <div className="space-y-8">
+        <LiveSignalPanel dealId={params.dealId} />
+        <SnapshotCsvImport dealId={params.dealId} />
         <PerformanceSnapshotForm dealId={params.dealId} />
         <div className="grid gap-6 md:grid-cols-2">
           <MetricTrendChart
@@ -69,7 +67,7 @@ export default function PerformancePage({ params }: { params: { dealId: string }
           />
         </div>
         <SnapshotHistoryTable snapshots={data} evaluations={evaluations.data ?? []} />
-      </section>
-    </PageShell>
+      </div>
+    </DealWorkspaceShell>
   )
 }

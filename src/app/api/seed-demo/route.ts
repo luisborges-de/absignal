@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import {
-  demoDeal,
+  demoDeals,
   demoEvaluations,
   demoSnapshots,
   demoTriggerRules,
@@ -22,7 +22,7 @@ export async function POST() {
   }
 
   const supabase = createServiceClient()
-  const deal = await supabase.from('deals').upsert(toDealRow(demoDeal), { onConflict: 'id' })
+  const deal = await supabase.from('deals').upsert(demoDeals.map(toDealRow), { onConflict: 'id' })
   if (deal.error) return NextResponse.json({ error: deal.error.message }, { status: 500 })
 
   const rules = await supabase
@@ -41,7 +41,7 @@ export async function POST() {
   if (evaluations.error) return NextResponse.json({ error: evaluations.error.message }, { status: 500 })
 
   return NextResponse.json({
-    dealId: demoDeal.id,
+    dealIds: demoDeals.map((deal) => deal.id),
     rules: demoTriggerRules.length,
     snapshots: demoSnapshots.length,
     evaluations: demoEvaluations.length,
